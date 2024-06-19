@@ -1,5 +1,5 @@
 [package]
-name = "klog_grep"
+name = "klog"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,10 +7,13 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.86"
+chrono = "0.4.38"
 clap = "4.5.7"
+colored = "2.1.0"
 futures = "0.3.30"
 k8s-openapi = { version = "0.22.0", features = ["latest"] }
 kube = { version = "0.91.0", features = ["runtime"] }
+regex = "1.10.5"
 tokio = { version = "1.38.0", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"

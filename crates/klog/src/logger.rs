@@ -1,16 +1,17 @@
+use colored::ColoredString;
 use tokio::sync::mpsc::UnboundedReceiver;
 
 pub(crate) struct Logger {
-    rx: UnboundedReceiver<String>,
+    rx: UnboundedReceiver<(ColoredString, String)>,
 }
 impl Logger {
-    pub fn new(rx: UnboundedReceiver<String>) -> Self {
+    pub fn new(rx: UnboundedReceiver<(ColoredString, String)>) -> Self {
         Self { rx }
     }
 
     pub async fn start(&mut self) {
         while let Some(log) = self.rx.recv().await {
-            tracing::info!(log);
+            println!("{} {}", log.0, log.1);
         }
     }
 }
