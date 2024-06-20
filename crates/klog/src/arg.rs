@@ -23,7 +23,7 @@ pub struct Args {
 impl Args {
     pub(crate) fn read_command_line() -> Args {
         let matches = Command::new("kgrep")
-            .about("grep in multiple pods")
+            .about("Tail log in multiple pods based on pod name prefix and optional created time.")
             .author("Vishal Kumar, vishalcjha@gmail.com")
             .arg(
                 Arg::new(POD_LABEL_FLAG)
