@@ -1,13 +1,15 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
+mod arg;
 mod ctime;
 mod logger;
 mod state;
 use std::sync::{Arc, OnceLock};
 
 use anyhow::Result;
+use arg::Args;
 use clap::{Arg, Command};
-use ctime::{CTime, CTimeParser};
+use ctime::CTime;
 use futures::TryStreamExt;
 use k8s_openapi::api::core::v1::Pod;
 use kube::{runtime::watcher, Api, Client};
@@ -18,57 +20,18 @@ use tokio::{
     sync::{mpsc::unbounded_channel, Mutex},
 };
 
-const POD_LABEL_FLAG: &'static str = "pod-label";
-const CTIME_HELP: &'static str = r#"
-If no units are specified, this primary evaluates to true if the difference between the
-time of creation of pod and the time klog was started, rounded up to
-the next full 24-hour period, is n 24-hour periods.
-NEWLINE
-If units are specified, this primary evaluates to true if the difference between the time
-of creation of pod and the time klog was started is exactly n units.
-"#;
 type LogResult = (String, String);
 static APP_STATE: OnceLock<Arc<Mutex<State>>> = OnceLock::new();
 
 #[tokio::main]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt().init();
-    let matches = Command::new("kgrep")
-        .about("grep in multiple pods")
-        .author("Vishal Kumar, vishalcjha@gmail.com")
-        .arg(
-            Arg::new(POD_LABEL_FLAG)
-                .value_name(POD_LABEL_FLAG)
-                .help("Pod name prefix(s)")
-                .required(true)
-                .num_args(1..),
-        )
-        .arg(
-            Arg::new("ctime")
-                .value_name("ctime")
-                .short('c')
-                .required(false)
-                .help(
-                    CTIME_HELP
-                        .replace("\n", "")
-                        .replace("\r", "")
-                        .replace("NEWLINE", "\n"),
-                )
-                .value_parser(CTimeParser),
-        )
-        .get_matches();
-
-    let pod_labels: Vec<String> = matches
-        .get_many(POD_LABEL_FLAG)
-        .expect("must provide pod to match against")
-        .cloned()
-        .collect();
-
-    let ctime = matches.get_one::<CTime>("ctime").map(|it| it.clone());
-
-    ctime
-        .as_ref()
-        .map(|it| tracing::info!("Will monitor pods created {:?}", it));
+    let args = Args::read_command_line();
+    tracing::info!("{}", args);
+    let Args {
+        pod_name_matchers,
+        ctime,
+    } = args;
 
     let client = Client::try_default().await?;
     let (tx, rx) = unbounded_channel();
@@ -82,7 +45,7 @@ async fn main() -> Result<()> {
 
     let _ = spawn(async move {
         let state = APP_STATE.get().unwrap().clone();
-        let _ = update_pods_names(state, pod_labels, ctime).await;
+        let _ = update_pods_names(state, pod_name_matchers, ctime).await;
     })
     .await;
     Ok(())
