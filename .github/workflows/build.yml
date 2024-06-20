@@ -10,35 +10,39 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.platform }}
 
     strategy:
       matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
+        platform: [ubuntu-latest, macos-latest, macos-latest]
         include:
           - platform: ubuntu-latest
             target: x86_64-unknown-linux-gnu
           - platform: macos-latest
             target: x86_64-apple-darwin
+          - platform: macos-latest
+            target: aarch64-apple-darwin
           - platform: windows-latest
             target: x86_64-pc-windows-msvc
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Rust
-        uses: rust-lang/setup-rust@v2
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          rust-version: stable
-          target: ${{ matrix.target }}
+          toolchain: stable
+
+      - name: Add target for cross-compilation
+        run: rustup target add ${{ matrix.target }}
 
       - name: Install dependencies
         run: cargo fetch
 
       - name: Build all binaries
         run: |
-          # Replace with the relative paths to your crate directories and their respective binaries
+          # Relative paths to crate directories and their respective binaries
           crates=(
             "crates/klog klog"
           )
@@ -47,18 +51,23 @@ jobs:
             crate_dir="${parts[0]}"
             binary_name="${parts[1]}"
             cargo build --release --manifest-path "$crate_dir/Cargo.toml" --target ${{ matrix.target }}
-            echo "$crate_dir/target/${{ matrix.target }}/release/$binary_name"
+            echo "$./target/${{ matrix.target }}/release/$binary_name"
           done
 
       - name: Upload binaries
         run: |
+          # Relative paths to crate directories and their respective binaries
+          crates=(
+            "crates/klog klog"
+          )
           # Upload each binary as a separate artifact
           for crate in "${crates[@]}"; do
             IFS=' ' read -r -a parts <<< "$crate"
             crate_dir="${parts[0]}"
             binary_name="${parts[1]}"
+            find . -name "$binary_name"
             artifact_name="${{ matrix.target }}-$binary_name"
-            path="$crate_dir/target/${{ matrix.target }}/release/$binary_name"
+            path="./target/${{ matrix.target }}/release/$binary_name"
             echo "Uploading $artifact_name from $path"
             if [ -f "$path" ]; then
               echo "File exists: $path"
