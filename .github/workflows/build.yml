@@ -14,8 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        platform:
-          [ubuntu-latest, apple-intel-latest, apple-latest, windows-latest]
+        platform: [ubuntu-latest, apple-intel-latest, apple-latest]
         include:
           - platform: ubuntu-latest
             os: ubuntu-latest
@@ -26,9 +25,6 @@ jobs:
           - platform: apple-latest
             os: macos-latest
             target: aarch64-apple-darwin
-          - platform: windows-latest
-            os: windows-latest
-            target: x86_64-pc-windows-msvc
 
     steps:
       - name: Checkout code
@@ -86,7 +82,7 @@ jobs:
         shell: bash
 
       - name: Upload all binaries as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.target }}-binaries
           path: artifacts/
