@@ -10,19 +10,24 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        platform: [ubuntu-latest, macos-latest, macos-latest]
+        platform:
+          [ubuntu-latest, apple-intel-latest, apple-latest, windows-latest]
         include:
           - platform: ubuntu-latest
+            os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-          - platform: macos-latest
+          - platform: apple-intel-latest
+            os: macos-latest
             target: x86_64-apple-darwin
-          - platform: macos-latest
+          - platform: apple-latest
+            os: macos-latest
             target: aarch64-apple-darwin
           - platform: windows-latest
+            os: windows-latest
             target: x86_64-pc-windows-msvc
 
     steps:
